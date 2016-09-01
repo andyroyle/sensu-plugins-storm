@@ -21,17 +21,20 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
   option :host,
          short: '-h',
          long: '--host=VALUE',
-         description: 'Cluster host'
+         description: 'Cluster host',
+         required: true
 
   option :user,
          short: '-u',
          long: '--username=VALUE',
-         description: 'username'
+         description: 'username',
+         required: true
 
   option :pass,
          short: '-p',
          long: '--password=VALUE',
-         description: 'password'
+         description: 'password',
+         required: true
 
   option :ssl,
          description: 'use HTTPS (default false)',
@@ -41,18 +44,21 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
          short: '-c',
          long: '--critical=VALUE',
          description: 'Critical threshold',
-         default: '0'
+         default: 0,
+         proc: proc { |l| l.to_f }
 
   option :expect,
          short: '-e',
          long: '--expect=VALUE',
-         description: 'Match exactly the nuber of topologies'
+         description: 'Match exactly the number of topologies',
+         proc: proc { |l| l.to_f }
 
   option :timeout,
          short: '-t',
          long: '--timeout=VALUE',
          description: 'Timeout in seconds',
-         default: 5
+         default: 5,
+         proc: proc { |l| l.to_f }
 
   def request(path)
     protocol = config[:ssl] ? 'https' : 'http'
@@ -66,13 +72,6 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
   end
 
   def run
-    critical_usage = config[:crit].to_f
-    expect = config[:expect].to_f
-
-    if [config[:host], config[:user], config[:pass]].any?(&:nil?)
-      unknown 'Must specify host, user and password'
-    end
-
     r = request('/stormui/api/v1/topology/summary')
 
     if r.code != 200
@@ -80,13 +79,13 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
     else
       topologies = JSON.parse(r.to_str)['topologies'].count
 
-      if expect > 0 && topologies == expect
+      if config[:expect] && topologies == config[:expect]
         ok "Topologies: #{topologies}"
-      elsif expect > 0
+      elsif config[:expect]
         critical "Topologies: #{topologies}"
       end
 
-      if topologies <= critical_usage
+      if topologies <= config[:crit]
         critical "Topologies: #{topologies}"
       else
         ok "Topologies: #{topologies}"

@@ -21,17 +21,20 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
   option :host,
          short: '-h',
          long: '--host=VALUE',
-         description: 'Cluster host'
+         description: 'Cluster host',
+         required: true
 
   option :user,
          short: '-u',
          long: '--username=VALUE',
-         description: 'username'
+         description: 'username',
+         required: true
 
   option :pass,
          short: '-p',
          long: '--password=VALUE',
-         description: 'password'
+         description: 'password',
+         required: true
 
   option :ssl,
          description: 'use HTTPS (default false)',
@@ -40,17 +43,22 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
   option :crit,
          short: '-c',
          long: '--critical=VALUE',
-         description: 'Critical threshold'
+         description: 'Critical threshold',
+         required: true,
+         proc: proc { |l| l.to_f }
 
   option :warn,
          short: '-w',
          long: '--warn=VALUE',
-         description: 'Warn threshold'
+         description: 'Warn threshold',
+         required: true,
+         proc: proc { |l| l.to_f }
 
   option :timeout,
          short: '-t',
          long: '--timeout=VALUE',
          description: 'Timeout in seconds',
+         proc: proc { |l| l.to_f },
          default: 5
 
   def request(path)
@@ -65,13 +73,6 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
   end
 
   def run
-    critical_usage = config[:crit].to_f
-    warn_usage = config[:warn].to_f
-
-    if [config[:host], config[:user], config[:pass]].any?(&:nil?)
-      unknown 'Must specify host, user and password'
-    end
-
     r = request('/stormui/api/v1/topology/summary')
 
     if r.code != 200
@@ -88,10 +89,10 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
       bolts = JSON.parse(t.to_str)['bolts']
       bolts.each do |bolt|
         capacity = bolt['capacity'].to_f
-        if capacity > critical_usage
+        if capacity > config[:crit]
           critical "bolt #{bolt['boltId']} has capacity #{bolt['capacity']}"
-        elsif capacity > warn_usage
-          warn "bolt #{bolt['boltId']} has capacity #{bolt['capacity']}"
+        elsif capacity > config[:warn]
+          warning "bolt #{bolt['boltId']} has capacity #{bolt['capacity']}"
         end
       end
 
