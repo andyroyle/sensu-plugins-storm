@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 #
-# Storm Topology Count Check
+# Storm Capacity Check
 # ===
 #
 # Copyright 2016 Andy Royle <ajroyle@gmail.com>
@@ -8,7 +8,7 @@
 # Released under the same terms as Sensu (the MIT license); see LICENSE
 # for details.
 #
-# Check the number of running topologies and compare to warn/crit thresholds
+# Check the capacity of all running bolts (in all topologies) and compare to crit/warn thresholds
 
 require 'sensu-plugin/check/cli'
 require 'rest-client'
@@ -79,24 +79,24 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
     end
 
     topologies = JSON.parse(r.to_str)['topologies']
-    topologies.each { |topology|
+    topologies.each do |topology|
       t = request("/stormui/api/v1/topology/#{topology['id']}")
       if t.code != 200
         critical "unexpected status code '#{r.code}'"
       end
 
       bolts = JSON.parse(t.to_str)['bolts']
-      bolts.each { |bolt|
+      bolts.each do |bolt|
         capacity = bolt['capacity'].to_f
         if capacity > critical_usage
           critical "bolt #{bolt['boltId']} has capacity #{bolt['capacity']}"
         elsif capacity > warn_usage
           warn "bolt #{bolt['boltId']} has capacity #{bolt['capacity']}"
         end
-      }
+      end
 
-      ok "all capacities ok"
-    }
+      ok 'all capacities ok'
+    end
 
   rescue Errno::ECONNREFUSED => e
     critical 'Storm is not responding' + e.message
