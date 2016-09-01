@@ -10,6 +10,7 @@
 ## Files
  * bin/check-storm-topologies.rb
  * bin/check-storm-capacity.rb
+ * bin/metrics-storm-topologies.rb
 
 ## Usage
 
@@ -23,6 +24,12 @@
 ```bash
 /opt/sensu/embedded/bin$ /opt/sensu/embedded/bin/ruby check-storm-capacity.rb --host=my-storm-cluster.com -s --user=admin --password=password -w 1 -c 1.5
 ```
+
+**check-storm-capacity** example
+```bash
+/opt/sensu/embedded/bin$ /opt/sensu/embedded/bin/ruby metrics-storm-topologies.rb --host=my-storm-cluster.com -s --user=admin --password=password
+```
+
 
 ## Installation
 
