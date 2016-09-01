@@ -1,0 +1,32 @@
+language: ruby
+cache:
+- bundler
+install:
+- bundle install
+rvm:
+- 2.0
+- 2.1
+- 2.2
+- 2.3.0
+notifications:
+  email:
+    recipients:
+    - ajroyle@gmail.com
+    on_success: change
+    on_failure: always
+script:
+- bundle exec rake default
+- gem build sensu-plugins-storm.gemspec
+deploy:
+  provider: rubygems
+  api_key:
+    secure: "QifCE6zfW1bIrqDtg8frdR9FDeg6Fqjr9GTpST1fjc7gFnnXPf0EfyhuOS4sH9ZaVNTk3DjVh6mgBZ0FZGgd1qFFpIM9sqObgXvjlE+PixTIgshZXx4MX4kTPy+XMNlvnJyEDJEdJGEOSbjPT+GygUHyMGkgaByK9J33912I0Hnpwa1f5sOFdBlRdJbP7fjb3glno8Ou+G9QaBX+8CIwADucds8ljL7uGE5TsElvCJOm6vCwAy2Nm23Q69YX7bAgaKVNhAK+7kz4zh+1b4Hq51je521ILL5ySVJohoWwHMzIVTVAeSQhlEuyQ0uS2tCMY33l/dfl/AxRzANQcGN8msd28tkQGbOIJglUQWdk6dnfulAY0WY2zH0W45Zd1kRF6/WBKlxes+ep7ffmg6KXBOthFLpcnX2kZZksAxsUMlNWzz7HFHX+YeIiJZFExI6qeemY5GMlB8gXtEGvMF54Og366YG0sNcr7ki8Syg9G1GKx5xoAbW6d3aCMfTjLqnLOcQuU40NAg6kLCkUrJu41asz2lrI7AD3wQsdJWmLA0C1+dGhv/nALEbEToVcOFNTbmrEZkNLOTXhlztvXja8J0peu/PJAlRccDM+8lwH/zSIlGeeMUS4DFW2WwOhyeuJLnHwRB3BNFhh+zqRT2rrx9vc1FVbogwOJQYjzF2RYz8="
+  gem: sensu-plugins-storm
+  on:
+    tags: true
+    all_branches: true
+    rvm: 2.0
+    rvm: 2.1
+    rvm: 2.2
+    rvm: 2.3.0
+    repo: andyroyle/sensu-plugins-storm
