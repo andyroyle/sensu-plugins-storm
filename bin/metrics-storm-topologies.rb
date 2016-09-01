@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 #
-# Storm Capacity Check
+# Storm Topology Metrics
 # ===
 #
 # Copyright 2016 Andy Royle <ajroyle@gmail.com>
@@ -8,16 +8,16 @@
 # Released under the same terms as Sensu (the MIT license); see LICENSE
 # for details.
 #
-# Check the capacity of all running bolts (in all topologies) and compare to crit/warn thresholds
+# Metrics for storm topologies
 
-require 'sensu-plugin/check/cli'
+require 'sensu-plugin/metric/cli'
 require 'rest-client'
 require 'openssl'
 require 'uri'
 require 'json'
 require 'base64'
 
-class CheckStormCapacity < Sensu::Plugin::Check::CLI
+class MetricsStormCapacity < Sensu::Plugin::Metric::CLI::Graphite
   option :host,
          short: '-h',
          long: '--host=VALUE',
@@ -40,26 +40,18 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
          description: 'use HTTPS (default false)',
          long: '--ssl'
 
-  option :crit,
-         short: '-c',
-         long: '--critical=VALUE',
-         description: 'Critical threshold',
-         required: true,
-         proc: proc { |l| l.to_f }
-
-  option :warn,
-         short: '-w',
-         long: '--warn=VALUE',
-         description: 'Warn threshold',
-         required: true,
-         proc: proc { |l| l.to_f }
-
   option :timeout,
          short: '-t',
          long: '--timeout=VALUE',
          description: 'Timeout in seconds',
          proc: proc { |l| l.to_f },
          default: 5
+
+  option :scheme,
+         short: '-s',
+         long: '--scheme=VALUE',
+         description: 'Metric naming scheme, text to prepend to metric',
+         default: "#{Socket.gethostname}.storm"
 
   def request(path)
     protocol = config[:ssl] ? 'https' : 'http'
@@ -73,37 +65,20 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
   end
 
   def run
-    r = request('/stormui/api/v1/topology/summary')
+    metrics = %w(emitted tasks failed executors processLatency executeLatency transferred capacity acked executed)
 
-    if r.code != 200
-      critical "unexpected status code '#{r.code}'"
-    end
+    r = request('/stormui/api/v1/topology/summary')
 
     topologies = JSON.parse(r.to_str)['topologies']
     topologies.each do |topology|
       t = request("/stormui/api/v1/topology/#{topology['id']}")
-      if t.code != 200
-        critical "unexpected status code '#{r.code}'"
-      end
 
       bolts = JSON.parse(t.to_str)['bolts']
       bolts.each do |bolt|
-        capacity = bolt['capacity'].to_f
-        if capacity > config[:crit]
-          critical "bolt #{bolt['boltId']} has capacity #{bolt['capacity']}"
-        elsif capacity > config[:warn]
-          warning "bolt #{bolt['boltId']} has capacity #{bolt['capacity']}"
-        end
+        metrics.each { |metric| output "#{config[:scheme]}.#{topology['name']}.#{bolt['boltId']}.#{metric}", bolt[metric] }
       end
 
-      ok 'all capacities ok'
+      ok
     end
-
-  rescue Errno::ECONNREFUSED => e
-    critical 'Storm is not responding' + e.message
-  rescue RestClient::RequestTimeout
-    critical 'Storm Connection timed out'
-  rescue StandardError => e
-    unknown 'An exception occurred:' + e.message
   end
 end
