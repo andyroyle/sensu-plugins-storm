@@ -15,6 +15,7 @@ require 'rest-client'
 require 'openssl'
 require 'uri'
 require 'json'
+require 'base64'
 
 class CheckStormTopologies < Sensu::Plugin::Check::CLI
   option :host,
@@ -47,23 +48,32 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
          long: '--expect=VALUE',
          description: 'Match exactly the nuber of topologies'
 
-  def request(path, server)
+  option :timeout,
+         short: '-t',
+         long: '--timeout=VALUE',
+         description: 'Timeout in seconds',
+         default: 5
+
+  def request(path)
     protocol = config[:ssl] ? 'https' : 'http'
-    RestClient::Resource.new("#{protocol}://#{config[:user]}:#{config[:pass]}@#{server}:#{config[:port]}/#{path}", timeout: 5).get
+    auth = Base64.encode64("#{config[:user]}:#{config[:pass]}")
+    RestClient::Request.execute(
+      method: :get,
+      url: "#{protocol}://#{config[:host]}:#{config[:port]}/#{path}",
+      timeout: config[:timeout],
+      headers: { 'Authorization' => "Basic #{auth}" }
+    )
   end
 
   def run
-    user = config[:user]
-    pass = config[:pass]
-    host = config[:host]
     critical_usage = config[:crit].to_f
     expect = config[:expect].to_f
 
-    if [host, user, pass].any?(&:nil?)
+    if [config[:host], config[:user], config[:pass]].any?(&:nil?)
       unknown 'Must specify host, user and password'
     end
 
-    r = request('/stormui/api/v1/topology/summary', host)
+    r = request('/stormui/api/v1/topology/summary')
 
     if r.code != 200
       critical "unexpected status code '#{r.code}'"
