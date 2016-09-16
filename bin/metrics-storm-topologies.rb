@@ -67,18 +67,17 @@ class MetricsStormCapacity < Sensu::Plugin::Metric::CLI::Graphite
   def run
     metrics = %w(emitted tasks failed executors processLatency executeLatency transferred capacity acked executed)
 
-    r = request('/stormui/api/v1/topology/summary')
+    r = request('/api/v1/topology/summary')
 
     topologies = JSON.parse(r.to_str)['topologies']
     topologies.each do |topology|
-      t = request("/stormui/api/v1/topology/#{topology['id']}")
+      t = request("/api/v1/topology/#{topology['id']}")
 
       bolts = JSON.parse(t.to_str)['bolts']
       bolts.each do |bolt|
         metrics.each { |metric| output "#{config[:scheme]}.#{topology['name']}.#{bolt['boltId']}.#{metric}", bolt[metric] }
       end
-
-      ok
     end
+    ok
   end
 end

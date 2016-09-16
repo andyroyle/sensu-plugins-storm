@@ -73,7 +73,7 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
   end
 
   def run
-    r = request('/stormui/api/v1/topology/summary')
+    r = request('/api/v1/topology/summary')
 
     if r.code != 200
       critical "unexpected status code '#{r.code}'"
@@ -81,7 +81,7 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
 
     topologies = JSON.parse(r.to_str)['topologies']
     topologies.each do |topology|
-      t = request("/stormui/api/v1/topology/#{topology['id']}")
+      t = request("/api/v1/topology/#{topology['id']}")
       if t.code != 200
         critical "unexpected status code '#{r.code}'"
       end

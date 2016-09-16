@@ -72,7 +72,7 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
   end
 
   def run
-    r = request('/stormui/api/v1/topology/summary')
+    r = request('/api/v1/topology/summary')
 
     if r.code != 200
       critical "unexpected status code '#{r.code}'"
