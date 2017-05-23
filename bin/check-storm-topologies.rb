@@ -24,17 +24,21 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
          description: 'Cluster host',
          required: true
 
+  option :port,
+         short: '-o',
+         long: '--port=VALUE',
+         description: 'Port (default 8080)',
+         default: 8080
+
   option :user,
          short: '-u',
          long: '--username=VALUE',
-         description: 'username',
-         required: true
+         description: 'username'
 
   option :pass,
          short: '-p',
          long: '--password=VALUE',
-         description: 'password',
-         required: true
+         description: 'password'
 
   option :ssl,
          description: 'use HTTPS (default false)',
@@ -62,13 +66,21 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
 
   def request(path)
     protocol = config[:ssl] ? 'https' : 'http'
-    auth = Base64.encode64("#{config[:user]}:#{config[:pass]}")
-    RestClient::Request.execute(
-      method: :get,
-      url: "#{protocol}://#{config[:host]}:#{config[:port]}/#{path}",
-      timeout: config[:timeout],
-      headers: { 'Authorization' => "Basic #{auth}" }
-    )
+    if config[:user]
+      auth = Base64.encode64("#{config[:user]}:#{config[:pass]}")
+      RestClient::Request.execute(
+        method: :get,
+        url: "#{protocol}://#{config[:host]}:#{config[:port]}#{path}",
+        timeout: config[:timeout],
+        headers: { 'Authorization' => "Basic #{auth}" }
+      )
+    else
+      RestClient::Request.execute(
+        method: :get,
+        url: "#{protocol}://#{config[:host]}:#{config[:port]}#{path}",
+        timeout: config[:timeout]
+      )
+    end
   end
 
   def run
