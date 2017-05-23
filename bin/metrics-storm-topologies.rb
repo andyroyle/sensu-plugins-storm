@@ -24,7 +24,7 @@ class MetricsStormCapacity < Sensu::Plugin::Metric::CLI::Graphite
          description: 'Cluster host',
          required: true
 
- option :port,
+  option :port,
         short: '-o',
         long: '--port=VALUE',
         description: 'Port (default 8080)',
