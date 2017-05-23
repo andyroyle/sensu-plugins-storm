@@ -24,17 +24,26 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
          description: 'Cluster host',
          required: true
 
+  option :port,
+         short: '-o',
+         long: '--port=VALUE',
+         description: 'Port (default 8080)',
+         default: 8080
+
   option :user,
          short: '-u',
          long: '--username=VALUE',
-         description: 'username',
-         required: true
+         description: 'username'
 
   option :pass,
          short: '-p',
          long: '--password=VALUE',
-         description: 'password',
-         required: true
+         description: 'password'
+
+  option :topology,
+         short: '-n',
+         long: '--topology=VALUE',
+         description: 'topology to check'
 
   option :ssl,
          description: 'use HTTPS (default false)',
@@ -63,13 +72,21 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
 
   def request(path)
     protocol = config[:ssl] ? 'https' : 'http'
-    auth = Base64.encode64("#{config[:user]}:#{config[:pass]}")
-    RestClient::Request.execute(
-      method: :get,
-      url: "#{protocol}://#{config[:host]}:#{config[:port]}/#{path}",
-      timeout: config[:timeout],
-      headers: { 'Authorization' => "Basic #{auth}" }
-    )
+    if config[:user]
+      auth = Base64.encode64("#{config[:user]}:#{config[:pass]}")
+      RestClient::Request.execute(
+        method: :get,
+        url: "#{protocol}://#{config[:host]}:#{config[:port]}#{path}",
+        timeout: config[:timeout],
+        headers: { 'Authorization' => "Basic #{auth}" }
+      )
+    else
+      RestClient::Request.execute(
+        method: :get,
+        url: "#{protocol}://#{config[:host]}:#{config[:port]}#{path}",
+        timeout: config[:timeout]
+      )
+    end
   end
 
   def run
@@ -81,6 +98,8 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
 
     topologies = JSON.parse(r.to_str)['topologies']
     topologies.each do |topology|
+      next if config[:topology] && topology['name'] != config[:topology]
+      puts topology['name']
       t = request("/api/v1/topology/#{topology['id']}")
       if t.code != 200
         critical "unexpected status code '#{r.code}'"
@@ -95,9 +114,9 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
           warning "bolt #{bolt['boltId']} has capacity #{bolt['capacity']}"
         end
       end
-
-      ok 'all capacities ok'
     end
+
+    ok 'all capacities ok'
 
   rescue Errno::ECONNREFUSED => e
     critical 'Storm is not responding' + e.message
