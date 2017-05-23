@@ -25,10 +25,10 @@ class MetricsStormCapacity < Sensu::Plugin::Metric::CLI::Graphite
          required: true
 
   option :port,
-        short: '-o',
-        long: '--port=VALUE',
-        description: 'Port (default 8080)',
-        default: 8080
+         short: '-o',
+         long: '--port=VALUE',
+         description: 'Port (default 8080)',
+         default: 8080
 
   option :user,
          short: '-u',
