@@ -8,7 +8,7 @@
 # Released under the same terms as Sensu (the MIT license); see LICENSE
 # for details.
 #
-# Check the number of workers (supervisors) for a given cluster and compare to warn/minimum thresholds
+# Check the number of supervisors for a given cluster and compare to warn/minimum thresholds
 
 require 'sensu-plugin/check/cli'
 require 'rest-client'
@@ -17,7 +17,7 @@ require 'uri'
 require 'json'
 require 'base64'
 
-class CheckStormCapacity < Sensu::Plugin::Check::CLI
+class CheckStormSupervisors < Sensu::Plugin::Check::CLI
   option :host,
          short: '-h',
          long: '--host=VALUE',
@@ -45,8 +45,8 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
          long: '--ssl'
 
   option :crit,
-         short: '-m',
-         long: '--minimum=VALUE',
+         short: '-c',
+         long: '--critical=VALUE',
          description: 'Minimum (critical) workers',
          required: true,
          proc: proc { |l| l.to_i }
@@ -92,15 +92,15 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
     end
 
     cluster = JSON.parse(r.to_str)
-    workers = cluster['supervisors'].to_i
+    supervisors = cluster['supervisors'].to_i
 
-    if workers < config[:crit]
-      critical "worker count #{workers} is below allowed minimum of #{config[:crit]}"
-    elsif workers < config[:warn]
-      warning "worker count #{workers} is below warn threshold of #{config[:warn]}"
+    if supervisors < config[:crit]
+      critical "supervisor count #{supervisors} is below allowed minimum of #{config[:crit]}"
+    elsif supervisors < config[:warn]
+      warning "supervisor count #{supervisors} is below warn threshold of #{config[:warn]}"
     end
 
-    ok 'worker count OK'
+    ok 'supervisor count OK'
 
   rescue Errno::ECONNREFUSED => e
     critical 'Storm is not responding' + e.message
