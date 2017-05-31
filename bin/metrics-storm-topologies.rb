@@ -17,7 +17,7 @@ require 'uri'
 require 'json'
 require 'base64'
 
-class MetricsStormCapacity < Sensu::Plugin::Metric::CLI::Graphite
+class MetricsStormTopologies < Sensu::Plugin::Metric::CLI::Graphite
   option :host,
          short: '-h',
          long: '--host=VALUE',
