@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 #
-# Storm Workers Check
+# Storm Supervisors Check
 # ===
 #
 # Copyright 2016 Andy Royle <ajroyle@gmail.com>
@@ -47,7 +47,7 @@ class CheckStormSupervisors < Sensu::Plugin::Check::CLI
   option :crit,
          short: '-c',
          long: '--critical=VALUE',
-         description: 'Minimum (critical) workers',
+         description: 'Minimum (critical) supervisors',
          required: true,
          proc: proc { |l| l.to_i }
 
