@@ -103,7 +103,6 @@ class CheckStormTopologies < Sensu::Plugin::Check::CLI
         ok "Topologies: #{topologies}"
       end
     end
-
   rescue Errno::ECONNREFUSED => e
     critical 'Storm is not responding' + e.message
   rescue RestClient::RequestTimeout

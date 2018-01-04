@@ -117,7 +117,6 @@ class CheckStormCapacity < Sensu::Plugin::Check::CLI
     end
 
     ok 'all capacities ok'
-
   rescue Errno::ECONNREFUSED => e
     critical 'Storm is not responding' + e.message
   rescue RestClient::RequestTimeout

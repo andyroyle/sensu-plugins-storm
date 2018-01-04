@@ -101,7 +101,6 @@ class CheckStormSupervisors < Sensu::Plugin::Check::CLI
     end
 
     ok 'supervisor count OK'
-
   rescue Errno::ECONNREFUSED => e
     critical 'Storm is not responding' + e.message
   rescue RestClient::RequestTimeout

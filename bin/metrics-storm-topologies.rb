@@ -77,7 +77,7 @@ class MetricsStormTopologies < Sensu::Plugin::Metric::CLI::Graphite
   end
 
   def run
-    metrics = %w(emitted tasks failed executors processLatency executeLatency transferred capacity acked executed)
+    metrics = %w[emitted tasks failed executors processLatency executeLatency transferred capacity acked executed]
 
     r = request('/api/v1/topology/summary')
 
